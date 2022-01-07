@@ -1,78 +1,130 @@
-import * as THREE from "../threejs/build/three.module.js";
-import { MarchingCubes } from '../threejs/examples/jsm/objects/MarchingCubes.js'
-import { OrbitControls } from '../threejs/examples/jsm/controls/OrbitControls.js'
+import * as THREE from '../threejs/build/three.module.js';
+import { MarchingCubes } from '../threejs/examples/jsm/objects/MarchingCubes.js';
+import { OrbitControls } from '../threejs/examples/jsm/controls/OrbitControls.js';
 
 class threejsViewer {
-    constructor(domElement) {
-        this.size = 0
-        this.databuffer = null
-        this.textureOption = 0
-        this.threshold = 75
-        this.enableLine = false
+  constructor(domElement) {
+    this.size = 0;
+    this.databuffer = null;
+    this.textureOption = 0;
+    this.threshold = 75;
+    this.enableLine = false;
+    this.mesh = null;
 
-        let width = domElement.clientWidth;
-        let height = domElement.clientHeight;
+    let width = domElement.clientWidth;
+    let height = domElement.clientHeight;
 
-        // Renderer
-        this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
-        this.renderer.setSize(width, height);
-        this.renderer.setClearColor(0xE6E6FA, 1.0)
-        domElement.appendChild(this.renderer.domElement);
+    // Renderer
+    this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    this.renderer.setSize(width, height);
+    this.renderer.setClearColor(0xe6e6fa, 1.0);
+    domElement.appendChild(this.renderer.domElement);
 
-        // Scene
-        this.scene = new THREE.Scene();
+    // Scene
+    this.scene = new THREE.Scene();
 
-        // Camera
-        let aspect = window.innerWidth / window.innerHeight;
+    // Camera
+    let aspect = window.innerWidth / window.innerHeight;
 
-        this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 50);
-        this.camera.position.set(2, 1, 2)
-        this.scene.add(this.camera)
+    this.camera = new THREE.PerspectiveCamera(45, aspect, 0.1, 50);
+    this.camera.position.set(2, 1, 2);
+    this.scene.add(this.camera);
 
-        // Light
-        let directionalLight = new THREE.DirectionalLight(0xffffff, 1)
-        directionalLight.position.set(2, 1, 2)   
-        this.scene.add(directionalLight)
+    // Light
+    let directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+    directionalLight.position.set(2, 1, 2);
+    this.scene.add(directionalLight);
 
-        // Controller
-        let controller = new OrbitControls(this.camera, this.renderer.domElement)
-        controller.target.set(0, 0.5, 0)
-        controller.update()
-        
-        //Axis Landmark
-        const axesHelper = new THREE.AxesHelper(100)
-        this.scene.add(axesHelper)
+    // Controller
+    let controller = new OrbitControls(this.camera, this.renderer.domElement);
+    controller.target.set(0, 0.5, 0);
+    controller.update();
 
-        // Ground
-        const plane = new THREE.Mesh(
-            new THREE.CircleGeometry(2, 30),
-            new THREE.MeshPhongMaterial({ color: 0xbbddff, opacity:0.4, transparent: true })
-        );
-        plane.rotation.x = - Math.PI / 2;
-        this.scene.add(plane);
+    //Axis Landmark
+    const axesHelper = new THREE.AxesHelper(100);
+    this.scene.add(axesHelper);
 
-        let scope = this
-        this.renderScene = function () {
-            requestAnimationFrame(scope.renderScene)
-            scope.renderer.render(scope.scene, scope.camera);
-        }
+    // Ground
+    const plane = new THREE.Mesh(
+      new THREE.CircleGeometry(2, 30),
+      new THREE.MeshPhongMaterial({
+        color: 0xbbddff,
+        opacity: 0.4,
+        transparent: true,
+      })
+    );
+    plane.rotation.x = -Math.PI / 2;
+    this.scene.add(plane);
 
-        //視窗變動時 ，更新畫布大小以及相機(投影矩陣)繪製的比例
-        window.addEventListener('resize', () => {
-            //update render canvas size
-            let width = domElement.clientWidth
-            let height = domElement.clientHeight
-            this.renderer.setSize(width, height);
+    let scope = this;
+    this.renderScene = function () {
+      requestAnimationFrame(scope.renderScene);
+      scope.renderer.render(scope.scene, scope.camera);
+    };
 
-            //update camera project aspect
-            this.camera.aspect = width / height
-            this.camera.updateProjectionMatrix();
-        })
+    //視窗變動時 ，更新畫布大小以及相機(投影矩陣)繪製的比例
+    window.addEventListener('resize', () => {
+      //update render canvas size
+      let width = domElement.clientWidth;
+      let height = domElement.clientHeight;
+      this.renderer.setSize(width, height);
 
-        this.renderScene()
+      //update camera project aspect
+      this.camera.aspect = width / height;
+      this.camera.updateProjectionMatrix();
+    });
+
+    this.renderScene();
+  }
+
+  // 因為matching cube規定固定大小 => 只要一個size
+  // loadData(paddingData, size, isolationValue) {
+  //   this.mesh = new MarchingCubes(size); //這種方式讀取是不完全的 再下載時還要做一個動作
+  //   //還要下載要call generateGeometry method
+  //   //使用phong default
+  //   mesh.material = new THREE.MeshPhongMaterial(); //TODO丟材質
+  //   mesh.isolation = isolationValue; //TODO丟isolationValue數值
+  //   mesh.field = paddingData; //TODO丟做好的paddingData
+
+  //   //將這個mesh加入scene
+  //   this.scene.add(mesh);
+  // }
+
+  updateModel() {
+    //geometry + material => mesh
+    //這個mesh有功能上的缺失
+    let mesh = this.scene.getObjectByName('mesh');
+
+    if (mesh === undefined || mesh === null) {
+      //初始化
+      //如果是gpu就不要再加額的code，如果不是就還要在加
+      this.mesh = new MarchingCubes(this.size);
+      this.mesh.name = 'mesh';
+      switch (this.textureOption) {
+        case 0:
+          this.mesh.material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+        case 1:
+          this.mesh.material = new THREE.MeshPhongMaterial({ color: 0xff00ff });
+        case 2:
+          this.mesh.material = new THREE.MeshToonMaterial({ color: 0xff00ff });
+        case 3:
+          this.mesh.material = new THREE.MeshNormalMaterial({
+            color: 0xff00ff,
+          });
+      }
+      this.mesh.isolation = this.threshold;
+      this.mesh.field = this.databuffer;
+      this.mesh.position.set(0, 0, 0);
+
+      this.scene.add(this.mesh);
+      return this.mesh;
     }
+  }
+
+  download() {
+    this.mesh.generateGeometry(); //可以讀取一個完整資料
+    return this.mesh;
+  }
 }
 
-export {
-    threejsViewer
-}
+export { threejsViewer };

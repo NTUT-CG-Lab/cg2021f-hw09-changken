@@ -139,14 +139,16 @@
 
         <!--閥值-->
         <div class="labelLayout">
-          <label for="isovalueSlider">閥值:0/0</label>
+          <label for="isovalueSlider"
+            >閥值:<span id="isoValue">0</span>/250</label
+          >
           <input
             class="labelInput"
             id="isovalueSlider"
             type="range"
             name="settingForm"
             min="0"
-            max="1000"
+            max="250"
           />
         </div>
 
@@ -154,8 +156,8 @@
         <div class="labelLayout">
           <label>Texture:</label>
           <select class="labelInput" name="settingForm">
-            <option value="0" selected>MeshBasicMaterial</option>
-            <option value="1">MeshPhongMaterial</option>
+            <option value="0">MeshBasicMaterial(has bug disabled)</option>
+            <option value="1" selected>MeshPhongMaterial</option>
             <option value="2">MeshToonMaterial</option>
             <option value="3">MeshNormalMaterial</option>
           </select>
@@ -290,7 +292,7 @@
             //TODO uint16讀到畫面上or將其轉換成uint8
             if (byte === 'uint8') {
               data = new Uint8Array(result);
-              console.log(data, max);
+              // console.log(data, max);
               // 做處裡再放進matching cube
               //實作
               paddingData = new Uint8Array(Math.pow(max, 3));
@@ -332,14 +334,16 @@
 
         // 閥值設定
         elements[2].addEventListener('click', evt => {
-          let isovalue = evt.srcElement.value;
+          let isovalue = parseInt(evt.srcElement.value);
+          console.log(isovalue);
           modelView.threshold = isovalue;
           modelView.updateModel();
         });
 
         // 紋理設置
         elements[3].addEventListener('change', evt => {
-          let selectedTextureIndex = evt.srcElement.target;
+          let selectedTextureIndex = parseInt(evt.srcElement.value);
+          console.log(selectedTextureIndex);
           modelView.textureOption = selectedTextureIndex;
           modelView.updateModel();
         });

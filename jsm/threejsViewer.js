@@ -90,6 +90,28 @@ class threejsViewer {
   //   this.scene.add(mesh);
   // }
 
+  matchingCubeSetting() {
+    switch (this.textureOption) {
+      case 0:
+      // this.mesh.material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
+      // break;
+      case 1:
+        this.mesh.material = new THREE.MeshPhongMaterial({ color: 0xff00ff });
+        break;
+      case 2:
+        this.mesh.material = new THREE.MeshToonMaterial({ color: 0xff00ff });
+        break;
+      case 3:
+        this.mesh.material = new THREE.MeshNormalMaterial({
+          color: 0xff00ff,
+        });
+    }
+    this.mesh.isolation = this.threshold;
+    document.querySelector('#isoValue').textContent = this.threshold;
+    this.mesh.field = this.databuffer;
+    this.mesh.position.set(0, 1, 0);
+  }
+
   updateModel() {
     //geometry + material => mesh
     //這個mesh有功能上的缺失
@@ -100,30 +122,21 @@ class threejsViewer {
       //如果是gpu就不要再加額的code，如果不是就還要在加
       this.mesh = new MarchingCubes(this.size);
       this.mesh.name = 'mesh';
-      switch (this.textureOption) {
-        case 0:
-          this.mesh.material = new THREE.MeshBasicMaterial({ color: 0xff00ff });
-        case 1:
-          this.mesh.material = new THREE.MeshPhongMaterial({ color: 0xff00ff });
-        case 2:
-          this.mesh.material = new THREE.MeshToonMaterial({ color: 0xff00ff });
-        case 3:
-          this.mesh.material = new THREE.MeshNormalMaterial({
-            color: 0xff00ff,
-          });
-      }
-      this.mesh.isolation = this.threshold;
-      this.mesh.field = this.databuffer;
-      this.mesh.position.set(0, 0, 0);
+      this.matchingCubeSetting();
 
       this.scene.add(this.mesh);
       return this.mesh;
+    } else {
+      this.matchingCubeSetting();
     }
   }
 
   download() {
-    this.mesh.generateGeometry(); //可以讀取一個完整資料
-    return this.mesh;
+    let geometry = this.mesh.generateGeometry(); //可以讀取一個完整資料
+
+    let mesh = new THREE.Mesh(geometry);
+
+    return mesh;
   }
 }
 
